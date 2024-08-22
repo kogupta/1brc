@@ -47,52 +47,50 @@ public class CalculateAverage_spullara {
         var file = new File(filename);
 
         var resultsMap = getFileSegments(file).stream().map(segment -> {
-            var resultMap = new ByteArrayToResultMap();
-            long segmentEnd = segment.end();
-            try (var fileChannel = (FileChannel) Files.newByteChannel(Path.of(filename), StandardOpenOption.READ)) {
-                var bb = fileChannel.map(FileChannel.MapMode.READ_ONLY, segment.start(), segmentEnd - segment.start());
-                // Up to 100 characters for a city name
-                var buffer = new byte[100];
-                int startLine;
-                int limit = bb.limit();
-                while ((startLine = bb.position()) < limit) {
-                    int currentPosition = startLine;
-                    byte b;
-                    int offset = 0;
-                    int hash = 0;
-                    while (currentPosition != segmentEnd && (b = bb.get(currentPosition++)) != ';') {
-                        buffer[offset++] = b;
-                        hash = 31 * hash + b;
-                    }
-                    int temp;
-                    int negative = 1;
-                    // Inspired by @yemreinci to unroll this even further
-                    if (bb.get(currentPosition) == '-') {
-                        negative = -1;
+                var resultMap = new ByteArrayToResultMap();
+                long segmentEnd = segment.end();
+                try (var fileChannel = (FileChannel) Files.newByteChannel(Path.of(filename), StandardOpenOption.READ)) {
+                    var bb = fileChannel.map(FileChannel.MapMode.READ_ONLY, segment.start(), segmentEnd - segment.start());
+                    // Up to 100 characters for a city name
+                    var buffer = new byte[100];
+                    int startLine;
+                    int limit = bb.limit();
+                    while ((startLine = bb.position()) < limit) {
+                        int currentPosition = startLine;
+                        byte b;
+                        int offset = 0;
+                        int hash = 0;
+                        while (currentPosition != segmentEnd && (b = bb.get(currentPosition++)) != ';') {
+                            buffer[offset++] = b;
+                            hash = 31 * hash + b;
+                        }
+                        int temp;
+                        int negative = 1;
+                        // Inspired by @yemreinci to unroll this even further
+                        if (bb.get(currentPosition) == '-') {
+                            negative = -1;
+                            currentPosition++;
+                        }
+                        if (bb.get(currentPosition + 1) == '.') {
+                            temp = negative * ((bb.get(currentPosition) - '0') * 10 + (bb.get(currentPosition + 2) - '0'));
+                            currentPosition += 3;
+                        } else {
+                            temp = negative * ((bb.get(currentPosition) - '0') * 100 + ((bb.get(currentPosition + 1) - '0') * 10 + (bb.get(currentPosition + 3) - '0')));
+                            currentPosition += 4;
+                        }
+                        if (bb.get(currentPosition) == '\r') {
+                            currentPosition++;
+                        }
                         currentPosition++;
+                        resultMap.putOrMerge(buffer, 0, offset, temp / 10.0, hash);
+                        bb.position(currentPosition);
                     }
-                    if (bb.get(currentPosition + 1) == '.') {
-                        temp = negative * ((bb.get(currentPosition) - '0') * 10 + (bb.get(currentPosition + 2) - '0'));
-                        currentPosition += 3;
-                    }
-                    else {
-                        temp = negative * ((bb.get(currentPosition) - '0') * 100 + ((bb.get(currentPosition + 1) - '0') * 10 + (bb.get(currentPosition + 3) - '0')));
-                        currentPosition += 4;
-                    }
-                    if (bb.get(currentPosition) == '\r') {
-                        currentPosition++;
-                    }
-                    currentPosition++;
-                    resultMap.putOrMerge(buffer, 0, offset, temp / 10.0, hash);
-                    bb.position(currentPosition);
+                    return resultMap;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-                return resultMap;
-            }
-            catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }).parallel().flatMap(partition -> partition.getAll().stream())
-                .collect(Collectors.toMap(e -> new String(e.key()), Entry::value, CalculateAverage_spullara::merge, TreeMap::new));
+            }).parallel().flatMap(partition -> partition.getAll().stream())
+                             .collect(Collectors.toMap(e -> new String(e.key()), Entry::value, CalculateAverage_spullara::merge, TreeMap::new));
 
         System.out.println(resultsMap);
     }
@@ -165,11 +163,9 @@ class Result {
 
 }
 
-    record Entry(byte[] key, Result value) {
-    }
+record Entry(byte[] key, Result value) {}
 
-    record FileSegment(long start, long end) {
-    }
+record FileSegment(long start, long end) {}
 
 class ByteArrayToResultMap {
     public static final int MAPSIZE = 1024 * 128;
