@@ -18,7 +18,6 @@
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk use java 21.0.3-graal 1>&2
 
-FILE=${1:-measurements.txt}
 USE_NATIVE_IMAGE=${2:-false}
 
 EXEC=CalculateAverage_kogupta
@@ -38,5 +37,5 @@ if [ -f target/"$IMAGE" ]; then
 else
     echo "Native image not found, using JVM mode." 1>&2
     JAVA_OPTS="--enable-preview"
-    hyperfine -w 0 -r 5 "java $JAVA_OPTS -cp target/average-1.0.0-SNAPSHOT.jar dev.morling.onebrc.$EXEC $FILE"
+    java $JAVA_OPTS -cp target/average-1.0.0-SNAPSHOT.jar dev.morling.onebrc.$EXEC
 fi

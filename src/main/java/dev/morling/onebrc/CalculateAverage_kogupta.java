@@ -36,24 +36,20 @@ public final class CalculateAverage_kogupta {
         // use an un-synchronized map for each chunk/thread
         // merge these maps to a bigger, sorted map
 
-        File f = new File(args[0]);
+        File f = new File("./measurements.txt");
         long length = f.length();
         long segmentSize = 1 << 30;
 
-        // !! byte buffer processing !!
-        // [start: 13,786,487,663, end: 13,786,488,692, length: 1,029]
-
-        // find segments
         try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
             // create segments
             // ensure that segments are aligned - ends on line separator, starts after line separator
             ArrayList<Segment> segments = createSegments(length, raf, segmentSize);
 
             Map<String, Stat> stats = segments.stream()
-                                          .parallel()
-                                          .map(segment -> processSegment(segment))
-                                          .reduce((a, b) -> merge(a, b))
-                                          .orElse(Collections.emptyMap());
+                    .parallel()
+                    .map(segment -> processSegment(segment))
+                    .reduce((a, b) -> merge(a, b))
+                    .orElse(Collections.emptyMap());
 
             TreeMap<String, Stat> sortedMap = new TreeMap<>(stats);
             System.out.println(sortedMap);
@@ -68,8 +64,8 @@ public final class CalculateAverage_kogupta {
                 // key in b
                 // merge current values into b
                 kv.getValue().mergeInto(other);
-
-            } else {
+            }
+            else {
                 // key not in b
                 b.put(key, kv.getValue());
             }
@@ -105,7 +101,8 @@ public final class CalculateAverage_kogupta {
 
                 result.merge(city, new Stat(v), Stat::merge);
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new UncheckedIOException(e);
         }
 
@@ -171,7 +168,7 @@ public final class CalculateAverage_kogupta {
         public void mergeInto(Stat other) {
             // modify other
             other.sum += sum;
-            other.count++;
+            other.count += count;
             other.max = Math.max(other.max, max);
             other.min = Math.min(other.min, min);
         }
@@ -179,7 +176,7 @@ public final class CalculateAverage_kogupta {
         public Stat merge(Stat other) {
             // modify this
             sum += other.sum;
-            count++;
+            count += other.count;
             max = Math.max(other.max, max);
             min = Math.min(other.min, min);
 
