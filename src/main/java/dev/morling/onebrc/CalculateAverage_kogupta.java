@@ -38,7 +38,7 @@ public final class CalculateAverage_kogupta {
 
         File f = new File("./measurements.txt");
         long length = f.length();
-        long segmentSize = 1 << 30;
+        long segmentSize = 1 << 28;
 
         try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
             // create segments

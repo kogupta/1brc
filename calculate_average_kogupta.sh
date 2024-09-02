@@ -48,4 +48,17 @@ EXEC=CalculateAverage_kogupta
 #fi
 
 
-hyperfine -w 2 -r 5 "java -Xms1G -Xmx1G -cp target/average-1.0.0-SNAPSHOT.jar dev.morling.onebrc.$EXEC"
+hyperfine -w 2 -r 3 "java --enable-preview -cp target/average-1.0.0-SNAPSHOT.jar dev.morling.onebrc.$EXEC"
+
+# results:
+#  $ ./calculate_average_kogupta.sh true 
+#  Using java version 21.0.3-graal in this shell.
+#  Benchmark 1: java -Xms1G -Xmx1G -cp target/average-1.0.0-SNAPSHOT.jar dev.morling.onebrc.CalculateAverage_kogupta
+#    Time (mean ± σ):     47.243 s ±  4.268 s    [User: 294.762 s, System: 9.814 s]
+#    Range (min … max):   40.565 s … 50.933 s    5 runs
+#  
+#  $ ./calculate_average_kogupta.sh false
+#  Using java version 21.0.4-oracle in this shell.
+#  Benchmark 1: java -Xms1G -Xmx1G -cp target/average-1.0.0-SNAPSHOT.jar dev.morling.onebrc.CalculateAverage_kogupta
+#    Time (mean ± σ):     71.180 s ±  2.527 s    [User: 452.746 s, System: 11.939 s]
+#    Range (min … max):   68.141 s … 73.560 s    5 runs
